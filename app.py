@@ -8,6 +8,8 @@ def browse_directory(text):
     text.set(dir)
 
 def rename(base_directory):
+    image_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'} 
+    
     if not base_directory:
         top = tk.Toplevel()
         top.geometry("300x100")
@@ -15,10 +17,10 @@ def rename(base_directory):
         return
         
     if not os.path.isdir(base_directory):
-        print(f"The path {base_directory} is not a valid directory.")
+        top = tk.Toplevel()
+        top.geometry("500x100")
+        tk.Label(top, text=f"The path {base_directory} is not a valid directory.").pack(pady=20)
         return
-
-    image_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'} 
 
     for root, subdirs, files in os.walk(base_directory):
         if not subdirs and root == base_directory:
