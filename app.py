@@ -125,58 +125,6 @@ def toggle_custom_name_entry(*args):
     else:
         custom_name_entry.config(state='disabled')
 
-window = tk.Tk()
-window.title("Batch Image Rename")
-window.geometry("400x350")
-
-directory = tk.StringVar()
-directory_entry = tk.Entry(window, textvariable=directory)
-directory_entry.pack(pady=10, padx=50, fill='x')
-tk.Button(window, text="Browse", width=5, command=lambda: browse_directory(directory)).pack(pady=5)
-
-# Add checkbox for leading zeros option
-use_leading_zeros = tk.BooleanVar(value=True)
-tk.Checkbutton(window, text="Use leading zeros in numbers (e.g., 0000001)", 
-               variable=use_leading_zeros).pack(pady=5)
-
-# Add custom name checkbox and entry
-use_custom_name = tk.BooleanVar(value=False)
-custom_name = tk.StringVar()
-
-custom_name_frame = tk.Frame(window)
-custom_name_frame.pack(pady=5, padx=50, fill='x')
-
-tk.Checkbutton(custom_name_frame, text="Use custom name", 
-               variable=use_custom_name,
-               command=toggle_custom_name_entry).pack(side='left')
-
-custom_name_entry = tk.Entry(custom_name_frame, textvariable=custom_name, state='disabled')
-custom_name_entry.pack(side='left', fill='x', expand=True, padx=(10, 0))
-
-# Add starting number entry
-start_number_frame = tk.Frame(window)
-start_number_frame.pack(pady=5, padx=50, fill='x')
-
-tk.Label(start_number_frame, text="Start numbering from:").pack(side='left')
-
-vcmd = (window.register(validate_start_number), '%P')
-start_number = tk.StringVar(value="1")
-start_number_entry = tk.Entry(start_number_frame, textvariable=start_number, 
-                            validate='key', validatecommand=vcmd, width=10)
-start_number_entry.pack(side='left', padx=(10, 0))
-
-use_custom_name.trace_add('write', toggle_custom_name_entry)
-
-tk.Button(window, text="Rename", width=10, 
-         command=lambda: rename(directory.get(), 
-                              use_leading_zeros.get(),
-                              use_custom_name.get(),
-                              custom_name.get(),
-                              start_number.get())).pack(pady=10)
-
-loading_spinner = tk.Label(window, text="", font=('Helvetica', 12))
-loading_spinner.pack(pady=10)
-
 def start_renaming():
     loading_spinner.config(text="Renaming...")
     threading.Thread(target=rename, args=(directory.get(), 
@@ -190,5 +138,81 @@ def stop_loading_spinner():
     if not os.path.isdir(directory.get()):  
         return
     loading_spinner.config(text="")
-    
+
+# main window
+window = tk.Tk()
+window.title("Batch Image Rename")
+window.columnconfigure(0, weight=1)
+window.rowconfigure(1, weight=1)
+window.rowconfigure(2, weight=1)
+window.rowconfigure(3, weight=1)
+
+# Directory selection frame
+frame1 = tk.LabelFrame(window, text="Directory Selection")
+frame1.grid(row=0, column=0, padx=5, pady=5, sticky='nsew')
+frame1.columnconfigure(0, weight=1)
+
+directory = tk.StringVar()
+directory_entry = tk.Entry(frame1, textvariable=directory)
+directory_entry.grid(row=0, column=0, padx=5, pady=5, sticky='ew')
+tk.Button(frame1, text="Browse", width=10, command=lambda: browse_directory(directory)).grid(row=0, column=1, padx=5, pady=5)
+
+# Custom name frame
+frame2 = tk.LabelFrame(window, text="Custom Name Options")
+frame2.grid(row=1, column=0, padx=5, pady=5, sticky='nsew')
+frame2.columnconfigure(1, weight=1)
+
+use_custom_name = tk.BooleanVar(value=False)
+custom_name = tk.StringVar()
+
+tk.Checkbutton(frame2, text="Use custom name", 
+               variable=use_custom_name,
+               command=toggle_custom_name_entry).grid(row=0, column=0, padx=5, pady=5)
+
+custom_name_entry = tk.Entry(frame2, textvariable=custom_name, state='disabled')
+custom_name_entry.grid(row=0, column=1, padx=5, pady=5, sticky='ew')
+
+use_custom_name.trace_add('write', toggle_custom_name_entry)
+
+# Numbering options frame
+frame3 = tk.LabelFrame(window, text="Numbering Options")
+frame3.grid(row=2, column=0, padx=5, pady=5, sticky='nsew')
+frame3.columnconfigure(0, weight=1)
+
+# Add checkbox for leading zeros option
+use_leading_zeros = tk.BooleanVar(value=True)
+tk.Checkbutton(frame3, text="Use leading zeros in numbers (e.g., 0000001)", 
+               variable=use_leading_zeros).grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky='w')
+
+vcmd = (window.register(validate_start_number), '%P')
+start_number = tk.StringVar(value="1")
+
+row1_frame = tk.Frame(frame3)
+row1_frame.grid(row=1, column=0, columnspan=2, sticky='w', padx=5, pady=5)
+
+tk.Label(row1_frame, text="Start numbering from:").pack(side='left')
+start_number_entry = tk.Entry(
+    row1_frame, textvariable=start_number,
+    validate='key', validatecommand=vcmd, width=10)
+start_number_entry.pack(side='left', padx=(5, 0))
+
+# Bottom frame for rename button and loading spinner
+bottom_frame = tk.Frame(window)
+bottom_frame.grid(row=3, column=0, padx=5, pady=5, sticky='nsew')
+bottom_frame.columnconfigure(0, weight=1)
+
+rename_btn = tk.Button(bottom_frame, text="Rename", width=20, 
+                    command=lambda: rename(directory.get(), 
+                                        use_leading_zeros.get(),
+                                        use_custom_name.get(),
+                                        custom_name.get(),
+                                        start_number.get()))
+rename_btn.grid(row=0, column=0, pady=10)
+
+loading_spinner = tk.Label(bottom_frame, text="", font=('Helvetica', 12))
+loading_spinner.grid(row=1, column=0, pady=5)
+
+# Set minimum window size
+window.minsize(400, 300)
+
 window.mainloop()
