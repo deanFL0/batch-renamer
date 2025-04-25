@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 import os
 import threading
 
@@ -7,7 +7,16 @@ def browse_directory(text):
     dir = filedialog.askdirectory()
     text.set(dir)
 
-def rename(base_directory):
+def validate_start_number(P):
+    if P == "":  # Allow empty field
+        return True
+    try:
+        int(P)
+        return True
+    except ValueError:
+        return False
+
+def rename(base_directory, use_leading_zeros, use_custom_name, custom_name, start_number):
     image_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'} 
     
     if not base_directory:
@@ -22,32 +31,83 @@ def rename(base_directory):
         tk.Label(top, text=f"The path {base_directory} is not a valid directory.").pack(pady=20)
         return
 
+    try:
+        counter = int(start_number) if start_number.strip() else 1
+    except ValueError:
+        messagebox.showerror("Error", "Starting number must be a valid integer")
+        return
+
     for root, subdirs, files in os.walk(base_directory):
-        if not subdirs and root == base_directory:
+        # Get the name of the current directory
+        dir_name = os.path.basename(root)
+
+        # Skip empty directories
+        if not files:
             continue
 
-        subdir_name = os.path.basename(root)
-        counter = 1
+        # Filter only image files and sort them to maintain consistent order
+        image_files = sorted([f for f in files if os.path.splitext(f)[1].lower() in image_extensions])
+        
+        # Skip if no image files found
+        if not image_files:
+            continue
 
-        for file_name in files:
+        # First pass: Rename all files to temporary names to avoid conflicts
+        temp_files = []
+        for idx, file_name in enumerate(image_files):
             original_path = os.path.join(root, file_name)
+            temp_name = f"__temp_{idx}{os.path.splitext(file_name)[1]}"
+            temp_path = os.path.join(root, temp_name)
+            
+            try:
+                os.rename(original_path, temp_path)
+                temp_files.append((temp_path, file_name))
+            except Exception as e:
+                # If error occurs during first pass, revert any changes made
+                for temp_path, original_name in temp_files:
+                    try:
+                        os.rename(temp_path, os.path.join(root, original_name))
+                    except:
+                        pass
+                top = tk.Toplevel()
+                top.geometry("300x120")
+                tk.Label(top, text="Error renaming file: " + str(e)).pack(pady=20)
+                tk.Button(top, text="OK", command=top.destroy).pack(pady=10)
+                return
 
-            # Get file extension
-            file_extension = os.path.splitext(file_name)[1]
+        # Second pass: Rename from temporary names to final names
+        for temp_path, _ in temp_files:
+            file_extension = os.path.splitext(temp_path)[1]
 
-            # Check if the file is an image
-            if file_extension.lower() not in image_extensions:
-                continue
+            # Determine if we should use a prefix
+            if use_custom_name:
+                if custom_name.strip():  # If custom name is not empty
+                    prefix = f"{custom_name.strip()}-"
+                else:
+                    prefix = ""  # No prefix if custom name is empty
+            else:
+                prefix = f"{dir_name}-"  # Use directory name as prefix
 
-            # Format new name
-            new_name = f"{subdir_name}-{counter:07d}{file_extension}"
+            # Format new name based on user preferences
+            if use_leading_zeros:
+                new_name = f"{prefix}{counter:07d}{file_extension}"
+            else:
+                new_name = f"{prefix}{counter}{file_extension}"
+                
             new_path = os.path.join(root, new_name)
 
             try:
-                # Rename the file
-                os.rename(original_path, new_path)
+                # Rename from temporary name to final name
+                os.rename(temp_path, new_path)
                 counter += 1
             except Exception as e:
+                # If error occurs during second pass, try to clean up temporary files
+                for remaining_temp, original_name in temp_files:
+                    if os.path.exists(remaining_temp):
+                        try:
+                            os.rename(remaining_temp, os.path.join(root, original_name))
+                        except:
+                            pass
                 top = tk.Toplevel()
                 top.geometry("300x120")
                 tk.Label(top, text="Error renaming file: " + str(e)).pack(pady=20)
@@ -59,27 +119,76 @@ def rename(base_directory):
     tk.Label(top, text="Files renamed successfully").pack(pady=20)
     tk.Button(top, text="OK", command=top.destroy).pack(pady=10)
 
+def toggle_custom_name_entry(*args):
+    if use_custom_name.get():
+        custom_name_entry.config(state='normal')
+    else:
+        custom_name_entry.config(state='disabled')
+
 window = tk.Tk()
 window.title("Batch Image Rename")
-window.geometry("400x200")
+window.geometry("400x350")
 
 directory = tk.StringVar()
 directory_entry = tk.Entry(window, textvariable=directory)
 directory_entry.pack(pady=10, padx=50, fill='x')
-tk.Button(window, text="Browse", width=3, command=lambda: browse_directory(directory)).pack(pady=10)
+tk.Button(window, text="Browse", width=5, command=lambda: browse_directory(directory)).pack(pady=5)
 
-tk.Button(window, text="Rename", width=10, command=lambda: rename(directory.get())).pack(pady=10)
+# Add checkbox for leading zeros option
+use_leading_zeros = tk.BooleanVar(value=True)
+tk.Checkbutton(window, text="Use leading zeros in numbers (e.g., 0000001)", 
+               variable=use_leading_zeros).pack(pady=5)
+
+# Add custom name checkbox and entry
+use_custom_name = tk.BooleanVar(value=False)
+custom_name = tk.StringVar()
+
+custom_name_frame = tk.Frame(window)
+custom_name_frame.pack(pady=5, padx=50, fill='x')
+
+tk.Checkbutton(custom_name_frame, text="Use custom name", 
+               variable=use_custom_name,
+               command=toggle_custom_name_entry).pack(side='left')
+
+custom_name_entry = tk.Entry(custom_name_frame, textvariable=custom_name, state='disabled')
+custom_name_entry.pack(side='left', fill='x', expand=True, padx=(10, 0))
+
+# Add starting number entry
+start_number_frame = tk.Frame(window)
+start_number_frame.pack(pady=5, padx=50, fill='x')
+
+tk.Label(start_number_frame, text="Start numbering from:").pack(side='left')
+
+vcmd = (window.register(validate_start_number), '%P')
+start_number = tk.StringVar(value="1")
+start_number_entry = tk.Entry(start_number_frame, textvariable=start_number, 
+                            validate='key', validatecommand=vcmd, width=10)
+start_number_entry.pack(side='left', padx=(10, 0))
+
+use_custom_name.trace_add('write', toggle_custom_name_entry)
+
+tk.Button(window, text="Rename", width=10, 
+         command=lambda: rename(directory.get(), 
+                              use_leading_zeros.get(),
+                              use_custom_name.get(),
+                              custom_name.get(),
+                              start_number.get())).pack(pady=10)
 
 loading_spinner = tk.Label(window, text="", font=('Helvetica', 12))
 loading_spinner.pack(pady=10)
 
 def start_renaming():
     loading_spinner.config(text="Renaming...")
-    threading.Thread(target=rename, args=(directory.get(),)).start()
+    threading.Thread(target=rename, args=(directory.get(), 
+                                        use_leading_zeros.get(),
+                                        use_custom_name.get(),
+                                        custom_name.get(),
+                                        start_number.get())).start()
     loading_spinner.after(100, stop_loading_spinner)  
 
 def stop_loading_spinner():
     if not os.path.isdir(directory.get()):  
         return
     loading_spinner.config(text="")
+    
 window.mainloop()
