@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import os
 import threading
+from natsort import natsorted
 
 def browse_directory(text):
     dir = filedialog.askdirectory()
@@ -46,7 +47,7 @@ def rename(base_directory, use_leading_zeros, use_custom_name, custom_name, star
             continue
 
         # Filter only image files and sort them to maintain consistent order
-        image_files = sorted([f for f in files if os.path.splitext(f)[1].lower() in image_extensions])
+        image_files = natsorted([f for f in files if os.path.splitext(f)[1].lower() in image_extensions])
         
         # Skip if no image files found
         if not image_files:
@@ -180,7 +181,7 @@ frame3.grid(row=2, column=0, padx=5, pady=5, sticky='nsew')
 frame3.columnconfigure(0, weight=1)
 
 # Add checkbox for leading zeros option
-use_leading_zeros = tk.BooleanVar(value=True)
+use_leading_zeros = tk.BooleanVar(value=False)
 tk.Checkbutton(frame3, text="Use leading zeros in numbers (e.g., 0000001)", 
                variable=use_leading_zeros).grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky='w')
 
