@@ -25,18 +25,41 @@ def validate_start_number(value: str) -> bool:
 
 def validate_directory(directory_path: str) -> tuple[bool, str]:
     """
-    Validate if the directory path exists and is accessible.
+    Validate if the directory path exists, is accessible, and contains image files.
     
     Args:
         directory_path: Path to validate
         
     Returns:
         tuple: (is_valid: bool, error_message: str)
+            - is_valid: True if directory exists and contains at least one image
+            - error_message: Empty string if valid, otherwise contains error description
     """
+    # Check if directory path is provided
     if not directory_path:
-        return False, "Please select a valid directory."
-        
+        return False, "Please select a directory."
+
+    # Check if directory exists and is accessible
     if not os.path.isdir(directory_path):
-        return False, f"The path {directory_path} is not a valid directory."
+        return False, f"The path '{directory_path}' is not a valid directory."
         
+    # Check if directory contains any images (including in subdirectories)
+    image_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'}
+    has_files = False
+    has_images = False
+    
+    for root, _, files in os.walk(directory_path):
+        if files:  # Directory has at least one file
+            has_files = True
+            # Check if any file is an image
+            if any(os.path.splitext(file)[1].lower() in image_extensions for file in files):
+                has_images = True
+                break
+    
+    if not has_files:
+        return False, f"The directory '{directory_path}' is empty."
+    
+    if not has_images:
+        return False, f"No image files found in '{directory_path}' or its subdirectories.\nSupported formats: {', '.join(sorted(ext[1:] for ext in image_extensions))}"
+    
     return True, ""
