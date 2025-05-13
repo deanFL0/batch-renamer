@@ -22,6 +22,16 @@ def validate_start_number(value: str) -> bool:
         return True
     except ValueError:
         return False
+    
+def validate_leading_zeros(self, P):
+    """Validate leading zeros input"""
+    if P == "":  # Allow empty field
+        return True
+    try:
+        value = int(P)
+        return value >= 1 and value <= 10
+    except ValueError:
+        return False
 
 def validate_directory(directory_path: str) -> tuple[bool, str]:
     """

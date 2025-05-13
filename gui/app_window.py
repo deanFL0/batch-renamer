@@ -3,7 +3,7 @@ from tkinter import filedialog
 import threading
 import os
 from utils.renamer import ImageRenamer
-from utils.validators import validate_start_number, validate_directory
+from utils.validators import validate_start_number, validate_directory, validate_leading_zeros
 from .message_popup import MessagePopup
 
 class AppWindow:
@@ -21,9 +21,10 @@ class AppWindow:
         self.directory = tk.StringVar()
         self.use_custom_name = tk.BooleanVar(value=False)
         self.custom_name = tk.StringVar()
+        self.start_number = tk.StringVar(value="1")
         self.continue_numbering = tk.BooleanVar(value=False)
         self.use_leading_zeros = tk.BooleanVar(value=False)
-        self.start_number = tk.StringVar(value="1")
+        self.number_of_leading_zeros = tk.StringVar(value="7")
         
         self._create_directory_frame()
         self._create_custom_name_frame()
@@ -62,15 +63,8 @@ class AppWindow:
         frame.grid(row=2, column=0, padx=5, pady=5, sticky='nsew')
         frame.columnconfigure(0, weight=1)
 
-        tk.Checkbutton(frame, text="Continue numbering for subdirectories",
-                       variable=self.continue_numbering).grid(row=0, column=0, padx=5, pady=5, sticky='w', columnspan=2)
-
-        tk.Checkbutton(frame, text="Use leading zeros in numbers (e.g., 0000001)", 
-                      variable=self.use_leading_zeros).grid(row=1, column=0, 
-                                                          columnspan=2, padx=5, pady=5, sticky='w')
-
         row1_frame = tk.Frame(frame)
-        row1_frame.grid(row=2, column=0, columnspan=2, sticky='w', padx=5, pady=5)
+        row1_frame.grid(row=0, column=0, columnspan=2, sticky='w', padx=5, pady=5)
 
         tk.Label(row1_frame, text="Start numbering from:").pack(side='left')
         vcmd = (self.window.register(self._validate_start_number), '%P')
@@ -78,6 +72,35 @@ class AppWindow:
             row1_frame, textvariable=self.start_number,
             validate='key', validatecommand=vcmd, width=10)
         start_number_entry.pack(side='left', padx=(5, 0))
+
+        tk.Checkbutton(frame, text="Continue numbering for subdirectories",
+                       variable=self.continue_numbering).grid(row=1, column=0, padx=5, pady=5, sticky='w', columnspan=2)
+
+        tk.Checkbutton(frame, text="Use leading zeros in numbers (e.g., 0000001)", 
+                      variable=self.use_leading_zeros).grid(row=2, column=0, 
+                                                          columnspan=2, padx=5, pady=5, sticky='w')
+        
+        row4_frame = tk.Frame(frame)
+        row4_frame.grid(row=3, column=0, columnspan=2, sticky='w', padx=5, pady=5)
+
+        tk.Label(row4_frame, text="Number of leading zeros:").pack(side='left')
+        
+        # Add validation for leading zeros entry
+        leading_zeros_vcmd = (self.window.register(self._validate_leading_zeros), '%P')
+        self.custom_leading_zeros_entry = tk.Entry(
+            row4_frame, 
+            textvariable=self.number_of_leading_zeros, 
+            validate='key',
+            validatecommand=leading_zeros_vcmd,
+            width=10,
+            state='disabled'
+        )
+        self.custom_leading_zeros_entry.pack(side='left', padx=(5, 0))
+        
+        # Optional: Add a label showing the allowed range
+        tk.Label(row4_frame, text=f"(1-{self.renamer.MAX_LEADING_ZEROS})").pack(side='left', padx=(5, 0))
+
+        self.use_leading_zeros.trace_add('write', self._toggle_custom_leading_zeros)
 
     def _create_bottom_frame(self):
         frame = tk.Frame(self.window)
@@ -98,11 +121,20 @@ class AppWindow:
     def _validate_start_number(self, P):
         return validate_start_number(P)
 
+    def _validate_leading_zeros(self, P):
+        return validate_leading_zeros(P)
+
     def _toggle_custom_name_entry(self, *args):
         if self.use_custom_name.get():
             self.custom_name_entry.config(state='normal')
         else:
             self.custom_name_entry.config(state='disabled')
+
+    def _toggle_custom_leading_zeros(self, *args):
+        if self.use_leading_zeros.get():
+            self.custom_leading_zeros_entry.config(state='normal')
+        else:
+            self.custom_leading_zeros_entry.config(state='disabled')
 
     def _start_renaming(self):
         # First validate the directory
@@ -124,6 +156,7 @@ class AppWindow:
                 self.custom_name.get(),
                 self.start_number.get(),
                 self.continue_numbering.get(),
+                self.number_of_leading_zeros.get(),
             )
         finally:
             # Always clean up UI state when done

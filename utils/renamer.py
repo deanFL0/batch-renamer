@@ -5,6 +5,7 @@ from gui.message_popup import MessagePopup
 class ImageRenamer:
     def __init__(self):
         self.image_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'}
+        self.MAX_LEADING_ZEROS = 10
 
     def validate_directory(self, base_directory):
         if not base_directory:
@@ -24,7 +25,8 @@ class ImageRenamer:
             self._show_error("Starting number must be a valid integer")
             return None
 
-    def rename_files(self, base_directory, use_leading_zeros, use_custom_name, custom_name, start_number, continue_numbering):
+    def rename_files(self, base_directory, use_leading_zeros, use_custom_name, 
+                     custom_name, start_number, continue_numbering, number_of_leading_zeros):
         if not self.validate_directory(base_directory):
             return
             
@@ -49,20 +51,20 @@ class ImageRenamer:
                 if not continue_numbering:
                     counter = initial_counter
                 counter = self._process_directory(root, image_files, dir_name, counter,
-                                               use_leading_zeros, use_custom_name, custom_name)
+                                               use_leading_zeros, use_custom_name, custom_name, number_of_leading_zeros)
             except Exception as e:
                 self._show_error(f"Error renaming files: {str(e)}")
                 return
 
         self._show_success()
 
-    def _process_directory(self, root, image_files, dir_name, counter, use_leading_zeros, use_custom_name, custom_name):
+    def _process_directory(self, root, image_files, dir_name, counter, use_leading_zeros, use_custom_name, custom_name, number_of_leading_zeros):
         # First pass: Create temporary files
         temp_files = self._create_temp_files(root, image_files)
         
         # Second pass: Rename to final names
         return self._rename_to_final(root, temp_files, dir_name, counter,
-                                   use_leading_zeros, use_custom_name, custom_name)
+                                   use_leading_zeros, use_custom_name, custom_name, number_of_leading_zeros)
 
     def _create_temp_files(self, root, image_files):
         temp_files = []
@@ -80,11 +82,11 @@ class ImageRenamer:
                 
         return temp_files
 
-    def _rename_to_final(self, root, temp_files, dir_name, counter, use_leading_zeros, use_custom_name, custom_name):
+    def _rename_to_final(self, root, temp_files, dir_name, counter, use_leading_zeros, use_custom_name, custom_name, number_of_leading_zeros):
         for temp_path, _ in temp_files:
             file_extension = os.path.splitext(temp_path)[1]
             prefix = self._get_prefix(use_custom_name, custom_name, dir_name)
-            new_name = self._format_new_name(prefix, counter, file_extension, use_leading_zeros)
+            new_name = self._format_new_name(prefix, counter, file_extension, use_leading_zeros, number_of_leading_zeros)
             new_path = os.path.join(root, new_name)
 
             try:
@@ -101,9 +103,11 @@ class ImageRenamer:
             return f"{custom_name.strip()}-" if custom_name.strip() else ""
         return f"{dir_name}-"
 
-    def _format_new_name(self, prefix, counter, file_extension, use_leading_zeros):
+    def _format_new_name(self, prefix, counter, file_extension, use_leading_zeros, number_of_leading_zeros):
         if use_leading_zeros:
-            return f"{prefix}{counter:07d}{file_extension}"
+            zeros = max(1, int(number_of_leading_zeros))
+            zeros = min(zeros, self.MAX_LEADING_ZEROS)
+            return f"{prefix}{counter:0{zeros}d}{file_extension}"
         return f"{prefix}{counter}{file_extension}"
 
     def _revert_temp_files(self, temp_files, root):
