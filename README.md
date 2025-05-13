@@ -16,7 +16,7 @@ A Python desktop application that helps you organize your image collections by a
 ## Installation
 
 ### Prerequisites
-- Python 3.6 or higher
+- Python 3.12 or higher
 - pip (Python package installer)
 
 ### Steps

@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog
 import threading
-import os
 from utils.renamer import ImageRenamer
 from utils.validators import validate_start_number, validate_directory, validate_leading_zeros
 from .message_popup import MessagePopup

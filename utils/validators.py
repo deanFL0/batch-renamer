@@ -2,7 +2,7 @@
 Validation functions for the image batch renamer application.
 """
 
-import os
+import pathlib as p
 
 def validate_start_number(value: str) -> bool:
     """
@@ -23,7 +23,7 @@ def validate_start_number(value: str) -> bool:
     except ValueError:
         return False
     
-def validate_leading_zeros(self, P):
+def validate_leading_zeros(P):
     """Validate leading zeros input"""
     if P == "":  # Allow empty field
         return True
@@ -50,7 +50,7 @@ def validate_directory(directory_path: str) -> tuple[bool, str]:
         return False, "Please select a directory."
 
     # Check if directory exists and is accessible
-    if not os.path.isdir(directory_path):
+    if not p.Path(directory_path).is_dir():
         return False, f"The path '{directory_path}' is not a valid directory."
         
     # Check if directory contains any images (including in subdirectories)
@@ -58,11 +58,11 @@ def validate_directory(directory_path: str) -> tuple[bool, str]:
     has_files = False
     has_images = False
     
-    for root, _, files in os.walk(directory_path):
+    for root, _, files in p.Path(directory_path).walk():
         if files:  # Directory has at least one file
             has_files = True
             # Check if any file is an image
-            if any(os.path.splitext(file)[1].lower() in image_extensions for file in files):
+            if any(p.Path(file).suffix.lower() in image_extensions for file in files):
                 has_images = True
                 break
     

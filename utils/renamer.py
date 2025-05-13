@@ -1,4 +1,4 @@
-import os
+import pathlib as p
 from natsort import natsorted
 from gui.message_popup import MessagePopup
 
@@ -12,7 +12,7 @@ class ImageRenamer:
             self._show_error("Please select a valid directory.")
             return False
             
-        if not os.path.isdir(base_directory):
+        if not p.Path(base_directory).is_dir():
             self._show_error(f"The path {base_directory} is not a valid directory.")
             return False
         
@@ -36,13 +36,13 @@ class ImageRenamer:
 
         counter = initial_counter
 
-        for root, subdirs, files in os.walk(base_directory):
-            dir_name = os.path.basename(root)
+        for root, _, files in p.Path(base_directory).walk():
+            dir_name = p.Path(root).name
 
             if not files:
                 continue
 
-            image_files = natsorted([f for f in files if os.path.splitext(f)[1].lower() in self.image_extensions])
+            image_files = natsorted([f for f in files if p.Path(f).suffix.lower() in self.image_extensions])
             
             if not image_files:
                 continue
@@ -69,12 +69,12 @@ class ImageRenamer:
     def _create_temp_files(self, root, image_files):
         temp_files = []
         for idx, file_name in enumerate(image_files):
-            original_path = os.path.join(root, file_name)
-            temp_name = f"__temp_{idx}{os.path.splitext(file_name)[1]}"
-            temp_path = os.path.join(root, temp_name)
+            original_path = p.Path.joinpath(root, file_name)
+            temp_name = f"__temp_{idx}{p.Path(file_name).suffix}"
+            temp_path = p.Path.joinpath(root, temp_name)
             
             try:
-                os.rename(original_path, temp_path)
+                p.Path.rename(original_path, temp_path)
                 temp_files.append((temp_path, file_name))
             except Exception as e:
                 self._revert_temp_files(temp_files, root)
@@ -84,16 +84,16 @@ class ImageRenamer:
 
     def _rename_to_final(self, root, temp_files, dir_name, counter, use_leading_zeros, use_custom_name, custom_name, number_of_leading_zeros):
         for temp_path, _ in temp_files:
-            file_extension = os.path.splitext(temp_path)[1]
+            file_extension = p.Path(temp_path).suffix
             prefix = self._get_prefix(use_custom_name, custom_name, dir_name)
             new_name = self._format_new_name(prefix, counter, file_extension, use_leading_zeros, number_of_leading_zeros)
-            new_path = os.path.join(root, new_name)
+            new_path = p.Path.joinpath(root, new_name)
 
             try:
-                os.rename(temp_path, new_path)
+                p.Path.rename(temp_path, new_path)
                 counter += 1
             except Exception as e:
-                self._revert_temp_files([f for f in temp_files if os.path.exists(f[0])], root)
+                self._revert_temp_files([f for f in temp_files if p.Path(f[0]).exists()], root)
                 raise e
                 
         return counter
@@ -113,7 +113,7 @@ class ImageRenamer:
     def _revert_temp_files(self, temp_files, root):
         for temp_path, original_name in temp_files:
             try:
-                os.rename(temp_path, os.path.join(root, original_name))
+                p.Path.rename(temp_path, p.Path.joinpath(root, original_name))
             except:
                 pass
 
