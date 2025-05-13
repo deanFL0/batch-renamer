@@ -24,13 +24,15 @@ class ImageRenamer:
             self._show_error("Starting number must be a valid integer")
             return None
 
-    def rename_files(self, base_directory, use_leading_zeros, use_custom_name, custom_name, start_number):
+    def rename_files(self, base_directory, use_leading_zeros, use_custom_name, custom_name, start_number, continue_numbering):
         if not self.validate_directory(base_directory):
             return
             
-        counter = self.validate_start_number(start_number)
-        if counter is None:
+        initial_counter = self.validate_start_number(start_number)
+        if initial_counter is None:
             return
+
+        counter = initial_counter
 
         for root, subdirs, files in os.walk(base_directory):
             dir_name = os.path.basename(root)
@@ -44,6 +46,8 @@ class ImageRenamer:
                 continue
 
             try:
+                if not continue_numbering:
+                    counter = initial_counter
                 counter = self._process_directory(root, image_files, dir_name, counter,
                                                use_leading_zeros, use_custom_name, custom_name)
             except Exception as e:

@@ -21,6 +21,7 @@ class AppWindow:
         self.directory = tk.StringVar()
         self.use_custom_name = tk.BooleanVar(value=False)
         self.custom_name = tk.StringVar()
+        self.continue_numbering = tk.BooleanVar(value=False)
         self.use_leading_zeros = tk.BooleanVar(value=False)
         self.start_number = tk.StringVar(value="1")
         
@@ -61,12 +62,15 @@ class AppWindow:
         frame.grid(row=2, column=0, padx=5, pady=5, sticky='nsew')
         frame.columnconfigure(0, weight=1)
 
+        tk.Checkbutton(frame, text="Continue numbering for subdirectories",
+                       variable=self.continue_numbering).grid(row=0, column=0, padx=5, pady=5, sticky='w', columnspan=2)
+
         tk.Checkbutton(frame, text="Use leading zeros in numbers (e.g., 0000001)", 
-                      variable=self.use_leading_zeros).grid(row=0, column=0, 
+                      variable=self.use_leading_zeros).grid(row=1, column=0, 
                                                           columnspan=2, padx=5, pady=5, sticky='w')
 
         row1_frame = tk.Frame(frame)
-        row1_frame.grid(row=1, column=0, columnspan=2, sticky='w', padx=5, pady=5)
+        row1_frame.grid(row=2, column=0, columnspan=2, sticky='w', padx=5, pady=5)
 
         tk.Label(row1_frame, text="Start numbering from:").pack(side='left')
         vcmd = (self.window.register(self._validate_start_number), '%P')
@@ -118,7 +122,8 @@ class AppWindow:
                 self.use_leading_zeros.get(),
                 self.use_custom_name.get(),
                 self.custom_name.get(),
-                self.start_number.get()
+                self.start_number.get(),
+                self.continue_numbering.get(),
             )
         finally:
             # Always clean up UI state when done
