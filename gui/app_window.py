@@ -40,7 +40,7 @@ class AppWindow:
 
         directory_entry = tk.Entry(frame, textvariable=self.directory)
         directory_entry.grid(row=0, column=0, padx=5, pady=5, sticky='ew')
-        tk.Button(frame, text="Browse", width=10, 
+        tk.Button(frame, text="Select Folder", width=10, 
                  command=self._browse_directory).grid(row=0, column=1, padx=5, pady=5)
 
     def _create_custom_name_frame(self):
@@ -48,7 +48,7 @@ class AppWindow:
         frame.grid(row=1, column=0, padx=5, pady=5, sticky='nsew')
         frame.columnconfigure(1, weight=1)
 
-        tk.Checkbutton(frame, text="Use custom name", 
+        tk.Checkbutton(frame, text="Use custom prefix", 
                       variable=self.use_custom_name,
                       command=self._toggle_custom_name_entry).grid(row=0, column=0, padx=5, pady=5)
 
@@ -65,26 +65,26 @@ class AppWindow:
         row1_frame = tk.Frame(frame)
         row1_frame.grid(row=0, column=0, columnspan=2, sticky='w', padx=5, pady=5)
 
-        tk.Label(row1_frame, text="Start numbering from:").pack(side='left')
+        tk.Label(row1_frame, text="Start numbers from:").pack(side='left')
         vcmd = (self.window.register(self._validate_start_number), '%P')
         start_number_entry = tk.Entry(
             row1_frame, textvariable=self.start_number,
             validate='key', validatecommand=vcmd, width=10)
         start_number_entry.pack(side='left', padx=(5, 0))
 
-        tk.Checkbutton(frame, text="Continue numbering for subdirectories",
+        tk.Checkbutton(frame, text="Keep counting across folders",
                        variable=self.continue_numbering).grid(row=1, column=0, padx=5, pady=5, sticky='w', columnspan=2)
 
-        tk.Checkbutton(frame, text="Use leading zeros in numbers (e.g., 0000001)", 
+        tk.Checkbutton(frame, text="Fixed-width numbers (e.g., 001, 002, 010, 100)", 
                       variable=self.use_leading_zeros).grid(row=2, column=0, 
                                                           columnspan=2, padx=5, pady=5, sticky='w')
         
         row4_frame = tk.Frame(frame)
         row4_frame.grid(row=3, column=0, columnspan=2, sticky='w', padx=5, pady=5)
 
-        tk.Label(row4_frame, text="Number of leading zeros:").pack(side='left')
+        tk.Label(row4_frame, text="Total width:").pack(side='left')
         
-        # Add validation for leading zeros entry
+        # Add validation for number width entry
         leading_zeros_vcmd = (self.window.register(self._validate_leading_zeros), '%P')
         self.custom_leading_zeros_entry = tk.Entry(
             row4_frame, 
@@ -96,8 +96,7 @@ class AppWindow:
         )
         self.custom_leading_zeros_entry.pack(side='left', padx=(5, 0))
         
-        # Optional: Add a label showing the allowed range
-        tk.Label(row4_frame, text=f"(1-{self.renamer.MAX_LEADING_ZEROS})").pack(side='left', padx=(5, 0))
+        tk.Label(row4_frame, text="(1-10 digits, e.g., 3 gives: 001, 4 gives: 0001)").pack(side='left', padx=(5, 0))
 
         self.use_leading_zeros.trace_add('write', self._toggle_custom_leading_zeros)
 
@@ -136,7 +135,6 @@ class AppWindow:
             self.custom_leading_zeros_entry.config(state='disabled')
 
     def _start_renaming(self):
-        # First validate the directory
         is_valid, error_message = validate_directory(self.directory.get())
         if not is_valid:
             MessagePopup.show_error(error_message, self.window)
@@ -158,7 +156,6 @@ class AppWindow:
                 self.number_of_leading_zeros.get(),
             )
         finally:
-            # Always clean up UI state when done
             self.window.after(0, self._cleanup_after_rename)
 
     def _cleanup_after_rename(self):
