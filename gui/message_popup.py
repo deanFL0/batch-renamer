@@ -6,7 +6,6 @@ from typing import Optional
 
 class MessagePopup:
     DEFAULT_WIDTH = 400  # Fixed width for all popups
-    MIN_HEIGHT = 150    # Minimum height
     
     @classmethod
     def show_error(cls, message: str, parent: Optional[tk.Tk] = None):
@@ -44,15 +43,11 @@ class MessagePopup:
         top = tk.Toplevel(parent)
         top.title(title)
         
-        # Make the window fixed width but adjust height based on content
-        top.geometry(f"{cls.DEFAULT_WIDTH}x{cls.MIN_HEIGHT}")
-        top.resizable(False, True)  # Fixed width, adjustable height
-        
         # Configure grid
         top.grid_columnconfigure(0, weight=1)
         top.grid_rowconfigure(0, weight=1)
         
-        # Create frame for content
+        # Create frame for content with padding
         frame = tk.Frame(top)
         frame.grid(row=0, column=0, sticky='nsew', padx=20, pady=20)
         frame.grid_columnconfigure(0, weight=1)
@@ -63,21 +58,31 @@ class MessagePopup:
         title_label.grid(row=0, column=0, pady=(0, 10))
         
         # Message label with word wrapping
-        msg_label = tk.Label(frame, text=message, wraplength=cls.DEFAULT_WIDTH - 60, 
-                           justify='center')
-        msg_label.grid(row=1, column=0, pady=(0, 20))
+        msg_label = tk.Label(frame, text=message, wraplength=cls.DEFAULT_WIDTH - 60,
+                           justify='left')  # Changed to left justify for better readability
+        msg_label.grid(row=1, column=0, pady=(0, 20), sticky='nsew')
         
         # OK button
         btn = tk.Button(frame, text="OK", command=top.destroy, width=10)
         btn.grid(row=2, column=0)
         
-        # Center the window on screen
+        # Set initial size
+        top.geometry(f"{cls.DEFAULT_WIDTH}x10")  # Start with minimal height
+        
+        # Update tasks and calculate required size
         top.update_idletasks()
-        width = top.winfo_width()
-        height = top.winfo_height()
-        x = (top.winfo_screenwidth() // 2) - (width // 2)
-        y = (top.winfo_screenheight() // 2) - (height // 2)
-        top.geometry(f'+{x}+{y}')
+        
+        # Get the required height based on the content
+        required_height = frame.winfo_reqheight() + 40  # Add some padding
+        
+        # Set the final window size
+        top.geometry(f"{cls.DEFAULT_WIDTH}x{required_height}")
+        
+        # Center the window on top of the parent window
+        if parent:
+            x = (parent.winfo_rootx() + parent.winfo_width() // 2) - cls.DEFAULT_WIDTH // 2
+            y = (parent.winfo_rooty() + parent.winfo_height() // 2) - required_height // 2
+            top.geometry(f'+{x}+{y}')
         
         # Make the window modal
         top.transient(parent)

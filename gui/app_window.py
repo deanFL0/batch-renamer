@@ -4,6 +4,7 @@ import threading
 import os
 from utils.renamer import ImageRenamer
 from utils.validators import validate_start_number, validate_directory
+from .message_popup import MessagePopup
 
 class AppWindow:
     def __init__(self):
@@ -103,10 +104,7 @@ class AppWindow:
         # First validate the directory
         is_valid, error_message = validate_directory(self.directory.get())
         if not is_valid:
-            top = tk.Toplevel()
-            top.geometry("300x100")
-            tk.Label(top, text=error_message).pack(pady=20)
-            tk.Button(top, text="OK", command=top.destroy).pack(pady=10)
+            MessagePopup.show_error(error_message, self.window)
             return
 
         self.loading_spinner.config(text="Renaming...")
