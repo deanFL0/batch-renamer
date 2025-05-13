@@ -7,11 +7,19 @@ A Python desktop application that helps you organize your image collections by a
 - 🖼️ Supports multiple image formats (PNG, JPG, JPEG, GIF, BMP, WEBP)
 - 📁 Processes all subdirectories automatically
 - 🏷️ Names files based on their directory names or custom prefixes
-- 🔢 Adds sequential numbering with optional leading zeros
-- 🔄 Natural sorting for consistent ordering
+- 🔢 Adds sequential numbering with optional leading zeros (1-10 digits)
+- 🔄 Multiple sorting options:
+  - Sort by name (natural sorting)
+  - Sort by creation date
+  - Sort by modified date
+  - Ascending or descending order
 - ⚡ Fast batch processing with error handling
 - 🛡️ Safe renaming with automatic rollback on errors
 - 🎨 Modern and user-friendly GUI
+
+## Screenshots
+
+![Screenshot 2025-05-13 210042](https://github.com/user-attachments/assets/67085112-d719-48c9-a7e9-87d99d61f9ed)
 
 ## Installation
 
@@ -19,11 +27,16 @@ A Python desktop application that helps you organize your image collections by a
 - Python 3.12 or higher
 - pip (Python package installer)
 
+### Required Python Packages
+- tkinter (usually comes with Python)
+- natsort (for natural sorting)
+- pathlib (usually comes with Python)
+
 ### Steps
 
 1. Clone the repository:
    ```cmd
-   git clone https://github.com/yourusername/image-batch-renamer.git
+   git clone https://github.com/deanFL0/image-batch-renamer.git
    cd image-batch-renamer
    ```
 
@@ -42,8 +55,14 @@ A Python desktop application that helps you organize your image collections by a
 2. Using the application:
    - Click "Browse" to select a directory containing images
    - Choose whether to use directory names or a custom prefix
-   - Enable "Use leading zeros" if you want numbers like 001, 002, etc.
-   - Set a starting number if needed
+   - Configure numbering options:
+     - Enable "Use leading zeros" if you want numbers like 001, 002, etc.
+     - Set the width of numbers (1-10 digits)
+     - Set a starting number if needed
+     - Choose whether to continue numbering across folders
+   - Select sorting options:
+     - Sort by: Name, Creation Date, or Modified Date
+     - Sort direction: Ascending or Descending
    - Click "Rename" to process the files
 
 ### Example
@@ -68,11 +87,11 @@ Photos/
   │   ├── Vacation2023-2.jpg
   │   └── Vacation2023-3.jpg
   └── Birthday/
-      ├── Birthday-4.jpg
-      └── Birthday-5.jpg
+      ├── Birthday-1.jpg
+      └── Birthday-2.jpg
 ```
 
-Or with leading zeros enabled:
+Or with leading zeros (width=7) enabled:
 ```
 Photos/
   ├── Vacation2023/
@@ -80,8 +99,8 @@ Photos/
   │   ├── Vacation2023-0000002.jpg
   │   └── Vacation2023-0000003.jpg
   └── Birthday/
-      ├── Birthday-0000004.jpg
-      └── Birthday-0000005.jpg
+      ├── Birthday-0000001.jpg
+      └── Birthday-0000002.jpg
 ```
 
 ## Project Structure
@@ -100,7 +119,12 @@ image-batch-renamer/
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request. When contributing:
+
+1. Fork the repository
+2. Create a new branch for your feature
+3. Make your changes
+4. Submit a pull request
 
 ## License
 
