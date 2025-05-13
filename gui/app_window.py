@@ -24,10 +24,13 @@ class AppWindow:
         self.continue_numbering = tk.BooleanVar(value=False)
         self.use_leading_zeros = tk.BooleanVar(value=False)
         self.number_of_leading_zeros = tk.StringVar(value="7")
+        self.sort_by = tk.StringVar(value="name")
+        self.sort_direction = tk.StringVar(value="asc")
         
         self._create_directory_frame()
         self._create_custom_name_frame()
         self._create_numbering_frame()
+        self._create_sort_frame()
         self._create_bottom_frame()
         
         # Set minimum window size
@@ -66,7 +69,7 @@ class AppWindow:
         row1_frame.grid(row=0, column=0, columnspan=2, sticky='w', padx=5, pady=5)
 
         tk.Label(row1_frame, text="Start numbers from:").pack(side='left')
-        vcmd = (self.window.register(self._validate_start_number), '%P')
+        vcmd = (self.window.register(validate_start_number), '%P')
         start_number_entry = tk.Entry(
             row1_frame, textvariable=self.start_number,
             validate='key', validatecommand=vcmd, width=10)
@@ -85,7 +88,7 @@ class AppWindow:
         tk.Label(row4_frame, text="Total width:").pack(side='left')
         
         # Add validation for number width entry
-        leading_zeros_vcmd = (self.window.register(self._validate_leading_zeros), '%P')
+        leading_zeros_vcmd = (self.window.register(validate_leading_zeros), '%P')
         self.custom_leading_zeros_entry = tk.Entry(
             row4_frame, 
             textvariable=self.number_of_leading_zeros, 
@@ -100,9 +103,37 @@ class AppWindow:
 
         self.use_leading_zeros.trace_add('write', self._toggle_custom_leading_zeros)
 
+    def _create_sort_frame(self):
+        frame = tk.LabelFrame(self.window, text="Sorting Options")
+        frame.grid(row=3, column=0, padx=5, pady=5, sticky='nsew')
+        frame.columnconfigure(0, weight=1)
+
+        # Sort by criteria
+        criteria_frame = tk.LabelFrame(frame, text="Sort by")
+        criteria_frame.grid(row=0, column=0, padx=5, pady=5, sticky='ew')
+        
+        sort_criteria = {
+            "Name": "name",
+            "Creation Date": "creation_date",
+            "Modified Date": "modified_date"
+        }
+        
+        for row, (text, value) in enumerate(sort_criteria.items()):
+            tk.Radiobutton(criteria_frame, text=text, variable=self.sort_by, 
+                        value=value).grid(row=row, column=0, padx=5, pady=1, sticky='w')
+
+        # Sort direction
+        direction_frame = tk.LabelFrame(frame, text="Order")
+        direction_frame.grid(row=0, column=1, padx=5, pady=5, sticky='ew')
+        
+        tk.Radiobutton(direction_frame, text="Ascending", variable=self.sort_direction, 
+                    value="asc").grid(row=0, column=0, padx=5, pady=1, sticky='w')
+        tk.Radiobutton(direction_frame, text="Descending", variable=self.sort_direction, 
+                    value="desc").grid(row=1, column=0, padx=5, pady=1, sticky='w')
+
     def _create_bottom_frame(self):
         frame = tk.Frame(self.window)
-        frame.grid(row=3, column=0, padx=5, pady=5, sticky='nsew')
+        frame.grid(row=4, column=0, padx=5, pady=5, sticky='nsew')
         frame.columnconfigure(0, weight=1)
 
         self.rename_btn = tk.Button(frame, text="Rename", width=20, 
@@ -115,12 +146,6 @@ class AppWindow:
     def _browse_directory(self):
         dir = filedialog.askdirectory()
         self.directory.set(dir)
-
-    def _validate_start_number(self, P):
-        return validate_start_number(P)
-
-    def _validate_leading_zeros(self, P):
-        return validate_leading_zeros(P)
 
     def _toggle_custom_name_entry(self, *args):
         if self.use_custom_name.get():
@@ -154,6 +179,8 @@ class AppWindow:
                 self.start_number.get(),
                 self.continue_numbering.get(),
                 self.number_of_leading_zeros.get(),
+                self.sort_by.get(),
+                self.sort_direction.get(),
             )
         finally:
             self.window.after(0, self._cleanup_after_rename)

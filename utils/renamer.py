@@ -25,8 +25,8 @@ class ImageRenamer:
             self._show_error("Starting number must be a valid integer")
             return None
 
-    def rename_files(self, base_directory, use_leading_zeros, use_custom_name, 
-                     custom_name, start_number, continue_numbering, number_of_leading_zeros):
+    def rename_files(self, base_directory, use_leading_zeros, use_custom_name, custom_name, start_number, 
+                     continue_numbering, number_of_leading_zeros, sort_by, sort_direction):
         if not self.validate_directory(base_directory):
             return
             
@@ -42,7 +42,7 @@ class ImageRenamer:
             if not files:
                 continue
 
-            image_files = natsorted([f for f in files if p.Path(f).suffix.lower() in self.image_extensions])
+            image_files = self._sort_files(files, root, sort_by, sort_direction)
             
             if not image_files:
                 continue
@@ -57,6 +57,29 @@ class ImageRenamer:
                 return
 
         self._show_success()
+
+    def _sort_files(self, files, root, sort_by, sort_direction):
+        image_files = [f for f in files if p.Path(f).suffix.lower() in self.image_extensions]
+        
+        if not image_files:
+            return []
+
+        reverse = sort_direction == "desc"
+        
+        if sort_by == "name":
+            return natsorted(image_files, reverse=reverse)
+        
+        if sort_by == "creation_date":
+            return sorted(image_files, 
+                        key=lambda x: p.Path.joinpath(root, x).stat().st_birthtime,
+                        reverse=reverse)
+        
+        if sort_by == "modified_date":
+            return sorted(image_files,
+                        key=lambda x: p.Path.joinpath(root, x).stat().st_mtime,
+                        reverse=reverse)
+        
+        return []
 
     def _process_directory(self, root, image_files, dir_name, counter, use_leading_zeros, use_custom_name, custom_name, number_of_leading_zeros):
         # First pass: Create temporary files
